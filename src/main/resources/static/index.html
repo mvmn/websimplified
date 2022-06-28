@@ -26,12 +26,32 @@
 </head>
 <body>
 	<h1>Гостьова книга</h1>
+	<hr/>
+	Автор: <input type="text" id="author" value="Микола" /><br/>
+	Коментар:<br/>
+	<textarea id="comment"></textarea>
+	<br/>
+	<input type="button" onclick="sendComment()" value="Відправити коментар" />
+	<hr/>
 	<div>Коментарі:</div>
 	<div id="comments">
 	</div>
-	
 
 	<script>
+		function sendComment() {
+			const comment = document.getElementById("comment").value;
+			const author = document.getElementById("author").value;
+			fetch("/guestbook/messages", {
+				method:"POST", 
+				body:JSON.stringify({ "message": comment, "author": author }),
+				headers: {
+				    'Content-Type': 'application/json;charset=UTF-8'
+				}
+			}).then(() => {
+				document.getElementById("comment").value = '';
+			});
+		}
+		
 		function escapeHtml(unsafe) {
 		    return unsafe
 		         .replace(/&/g, "&amp;")
@@ -82,8 +102,7 @@
 			const commentDiv = document.createElement("div");
 			commentDiv.setAttribute("class", "comment");
 			commentDiv.innerHTML = content;
-			document.getElementById("comments").prepend(commentDiv)
-			
+			document.getElementById("comments").prepend(commentDiv)			
 		};
 		
 		webSocket.onclose = event => {
