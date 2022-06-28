@@ -1,0 +1,95 @@
+<html>
+<head>
+<title>Hello World</title>
+<style>
+	.comment .author {
+		background-color: black;
+		color: white;
+	}
+	
+	.comment .date {
+		margin-left: 5px;
+		background-color: yellow;
+	}
+
+	.comment .message {
+		margin-left: 6px;
+		background-color: lightgreen;
+		font-size: 120%;
+	}
+	
+	.comment {
+		margin: 5px;
+		border: solid grey 1px;
+	}
+</style>
+</head>
+<body>
+	<h1>Гостьова книга</h1>
+	<div>Коментарі:</div>
+	<div id="comments">
+	</div>
+	
+
+	<script>
+		function escapeHtml(unsafe) {
+		    return unsafe
+		         .replace(/&/g, "&amp;")
+		         .replace(/</g, "&lt;")
+		         .replace(/>/g, "&gt;")
+		         .replace(/"/g, "&quot;")
+		         .replace(/'/g, "&#039;");
+		 }
+		
+		function fetchComments() {
+			fetch("/guestbook/messages").then(response => 
+				response.json().then(data => 
+					document.getElementById("comments").innerHTML = data.map(msg => 
+						[
+							'<div class="comment">',
+							renderComment(msg),
+							'</div>'
+						].join("\n")
+					).join("\n")
+				)
+			);
+		}
+		
+		function renderComment(msg) {
+			return [
+				'<span class="author">',
+				escapeHtml(msg.author),
+				'</span>',
+				'<span class="date">',
+				new Date(msg.timestamp*1000).toString(),
+				'</span>',
+				'<div class="message">',
+				escapeHtml(msg.message),
+				'</div>'
+			].join("\n");
+		}
+		
+		fetchComments();
+	
+		const webSocket = new WebSocket('ws://localhost:8080/ws');
+		
+		webSocket.onopen = event => {
+			console.log('onopen');
+		};
+		
+		webSocket.onmessage = event => {
+			var content = renderComment(JSON.parse(event.data));
+			const commentDiv = document.createElement("div");
+			commentDiv.setAttribute("class", "comment");
+			commentDiv.innerHTML = content;
+			document.getElementById("comments").prepend(commentDiv)
+			
+		};
+		
+		webSocket.onclose = event => {
+		    console.log('onclose');
+		    webSocket.connect();
+		};
+	</script>
+</body>
+</html>
